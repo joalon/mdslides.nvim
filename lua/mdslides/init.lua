@@ -86,6 +86,7 @@ function M.start()
   vim.api.nvim_set_current_buf(slide_buf)
 
   vim.bo[slide_buf].filetype = "markdown"
+  vim.wo[0].statusline = "%!v:lua.require('mdslides').statusline()"
 
   M._state = {
     source_buf = source_buf,
@@ -133,6 +134,14 @@ function M.goto_slide(n)
   n = math.max(1, math.min(n, #state.slides))
   state.current_index = n
   render_slide()
+end
+
+--- Return a statusline string showing current slide position.
+---@return string
+function M.statusline()
+  local state = M._state
+  if not state then return "" end
+  return string.format("Slide [%d/%d]", state.current_index, #state.slides)
 end
 
 return M

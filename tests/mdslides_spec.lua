@@ -197,3 +197,39 @@ describe("navigation", function()
     assert.are.equal(1, mdslides._state.current_index)
   end)
 end)
+
+describe("statusline", function()
+  local source_buf
+
+  before_each(function()
+    source_buf = vim.api.nvim_create_buf(true, false)
+    vim.api.nvim_set_current_buf(source_buf)
+    vim.api.nvim_buf_set_lines(source_buf, 0, -1, false, {
+      "---",
+      "marp: true",
+      "---",
+      "",
+      "# Slide 1",
+      "",
+      "---",
+      "",
+      "# Slide 2",
+    })
+  end)
+
+  after_each(function()
+    if mdslides._state then pcall(mdslides.stop) end
+    pcall(vim.api.nvim_buf_delete, source_buf, { force = true })
+  end)
+
+  it("returns slide position string", function()
+    mdslides.start()
+    assert.are.equal("Slide [1/2]", mdslides.statusline())
+    mdslides.next()
+    assert.are.equal("Slide [2/2]", mdslides.statusline())
+  end)
+
+  it("returns empty string when not presenting", function()
+    assert.are.equal("", mdslides.statusline())
+  end)
+end)
