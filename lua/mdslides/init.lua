@@ -65,6 +65,18 @@ local function render_slide()
   vim.api.nvim_win_set_cursor(0, { 1, 0 })
 end
 
+--- Set up buffer-local keymaps for the slide buffer.
+local function set_keymaps(buf)
+  local opts = { buffer = buf, nowait = true, silent = true }
+  for _, key in ipairs({ "n", "l", "<Right>", "<Down>" }) do
+    vim.keymap.set("n", key, function() M.next() end, opts)
+  end
+  for _, key in ipairs({ "p", "h", "<Left>", "<Up>" }) do
+    vim.keymap.set("n", key, function() M.prev() end, opts)
+  end
+  vim.keymap.set("n", "q", function() M.stop() end, opts)
+end
+
 --- Start presentation mode from the current buffer.
 function M.start()
   if M._state then return end
@@ -96,6 +108,7 @@ function M.start()
   }
 
   render_slide()
+  set_keymaps(slide_buf)
 end
 
 --- Stop presentation mode, restore original buffer.
