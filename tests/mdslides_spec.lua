@@ -128,3 +128,72 @@ describe("presentation lifecycle", function()
     assert.is_false(vim.bo[buf].modifiable)
   end)
 end)
+
+describe("navigation", function()
+  local source_buf
+
+  before_each(function()
+    source_buf = vim.api.nvim_create_buf(true, false)
+    vim.api.nvim_set_current_buf(source_buf)
+    vim.api.nvim_buf_set_lines(source_buf, 0, -1, false, {
+      "---",
+      "marp: true",
+      "---",
+      "",
+      "# Slide 1",
+      "",
+      "---",
+      "",
+      "# Slide 2",
+      "",
+      "---",
+      "",
+      "# Slide 3",
+    })
+    mdslides.start()
+  end)
+
+  after_each(function()
+    if mdslides._state then pcall(mdslides.stop) end
+    pcall(vim.api.nvim_buf_delete, source_buf, { force = true })
+  end)
+
+  it("next advances to slide 2", function()
+    mdslides.next()
+    assert.are.equal(2, mdslides._state.current_index)
+    local lines = vim.api.nvim_buf_get_lines(mdslides._state.slide_buf, 0, -1, false)
+    assert.are.same({ "# Slide 2" }, lines)
+  end)
+
+  it("next on last slide is a no-op", function()
+    mdslides.next()
+    mdslides.next()
+    mdslides.next() -- already on slide 3
+    assert.are.equal(3, mdslides._state.current_index)
+  end)
+
+  it("prev goes back to slide 1", function()
+    mdslides.next()
+    mdslides.prev()
+    assert.are.equal(1, mdslides._state.current_index)
+  end)
+
+  it("prev on first slide is a no-op", function()
+    mdslides.prev()
+    assert.are.equal(1, mdslides._state.current_index)
+  end)
+
+  it("goto jumps to a specific slide", function()
+    mdslides.goto_slide(3)
+    assert.are.equal(3, mdslides._state.current_index)
+    local lines = vim.api.nvim_buf_get_lines(mdslides._state.slide_buf, 0, -1, false)
+    assert.are.same({ "# Slide 3" }, lines)
+  end)
+
+  it("goto clamps out-of-range values", function()
+    mdslides.goto_slide(99)
+    assert.are.equal(3, mdslides._state.current_index)
+    mdslides.goto_slide(0)
+    assert.are.equal(1, mdslides._state.current_index)
+  end)
+end)

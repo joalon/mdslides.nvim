@@ -105,4 +105,34 @@ function M.stop()
   vim.api.nvim_set_current_buf(state.source_buf)
 end
 
+--- Advance to the next slide.
+function M.next()
+  local state = M._state
+  if not state then return end
+  if state.current_index < #state.slides then
+    state.current_index = state.current_index + 1
+    render_slide()
+  end
+end
+
+--- Go back to the previous slide.
+function M.prev()
+  local state = M._state
+  if not state then return end
+  if state.current_index > 1 then
+    state.current_index = state.current_index - 1
+    render_slide()
+  end
+end
+
+--- Jump to a specific slide number (clamped to valid range).
+---@param n number
+function M.goto_slide(n)
+  local state = M._state
+  if not state then return end
+  n = math.max(1, math.min(n, #state.slides))
+  state.current_index = n
+  render_slide()
+end
+
 return M
