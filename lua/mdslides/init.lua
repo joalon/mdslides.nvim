@@ -52,4 +52,57 @@ function M.parse_slides(lines)
   return slides
 end
 
+-- Module-level state (nil when not presenting)
+M._state = nil
+
+--- Render the current slide into the slide buffer.
+local function render_slide()
+  local state = M._state
+  if not state then return end
+  vim.bo[state.slide_buf].modifiable = true
+  vim.api.nvim_buf_set_lines(state.slide_buf, 0, -1, false, state.slides[state.current_index])
+  vim.bo[state.slide_buf].modifiable = false
+  vim.api.nvim_win_set_cursor(0, { 1, 0 })
+end
+
+--- Start presentation mode from the current buffer.
+function M.start()
+  if M._state then return end
+
+  local source_buf = vim.api.nvim_get_current_buf()
+  local lines = vim.api.nvim_buf_get_lines(source_buf, 0, -1, false)
+  local slides = M.parse_slides(lines)
+
+  if #slides == 0 then
+    vim.notify("mdslides: no slides found", vim.log.levels.WARN)
+    return
+  end
+
+  local slide_buf = vim.api.nvim_create_buf(false, true)
+  vim.bo[slide_buf].buftype = "nofile"
+  vim.bo[slide_buf].bufhidden = "wipe"
+  vim.bo[slide_buf].swapfile = false
+
+  vim.api.nvim_set_current_buf(slide_buf)
+
+  vim.bo[slide_buf].filetype = "markdown"
+
+  M._state = {
+    source_buf = source_buf,
+    slide_buf = slide_buf,
+    slides = slides,
+    current_index = 1,
+  }
+
+  render_slide()
+end
+
+--- Stop presentation mode, restore original buffer.
+function M.stop()
+  local state = M._state
+  if not state then return end
+  M._state = nil
+  vim.api.nvim_set_current_buf(state.source_buf)
+end
+
 return M
