@@ -157,4 +157,29 @@ function M.statusline()
   return string.format("Slide [%d/%d]", state.current_index, #state.slides)
 end
 
+--- Dispatch :Slides subcommands.
+---@param opts table  command callback opts from nvim_create_user_command
+function M.command(opts)
+  local arg = opts.fargs[1]
+  if arg == nil or arg == "" then
+    M.start()
+  elseif arg == "next" then
+    M.next()
+  elseif arg == "prev" then
+    M.prev()
+  elseif arg == "stop" then
+    M.stop()
+  elseif tonumber(arg) then
+    M.goto_slide(tonumber(arg))
+  else
+    vim.notify("mdslides: unknown command: " .. arg, vim.log.levels.ERROR)
+  end
+end
+
+--- Tab completion for :Slides subcommands.
+---@return string[]
+function M.complete()
+  return { "next", "prev", "stop" }
+end
+
 return M
